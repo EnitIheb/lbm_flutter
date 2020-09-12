@@ -1,14 +1,42 @@
 
 import 'package:ecommerce_int2/app_properties.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-import 'forgot_password_page.dart';
 
+const SERVER_IP = 'http://192.168.1.4:8098';
 class RegisterPage extends StatefulWidget {
   @override
   _RegisterPageState createState() => _RegisterPageState();
 }
+void displayDialog(BuildContext context, String title, String text) =>
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+              title: Text(title),
+              content: Text(text)
+          ),
+    );
 
+Future<int> attemptSignUp(String username, String password,String firstname,String email,String lastname,String gender,List<String> role) async {
+  var res = await http.post(
+      '$SERVER_IP/api/auth/signup',
+      body: json.encode( {
+        "username" : username,
+        "firstName":firstname,
+        "password": password,
+        "lastName":lastname,
+        "email":email,
+        "gender":gender,
+        "role":role
+
+      }),
+    headers: {"Content-Type": "application/json"},
+  );
+  return res.statusCode;
+}
 class _RegisterPageState extends State<RegisterPage> {
   TextEditingController email =
       TextEditingController(text: 'example@email.com');
@@ -49,11 +77,29 @@ class _RegisterPageState extends State<RegisterPage> {
       left: MediaQuery.of(context).size.width / 4,
       bottom: 40,
       child: InkWell(
-        onTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => ForgotPasswordPage()));
+        onTap: () async {
+          var username="ahmed";
+          var password="123456";
+
+
+          if(username.length < 4)
+            displayDialog(context, "Invalid Username", "The username should be at least 4 characters long");
+          else if(password.length < 4)
+            displayDialog(context, "Invalid Password", "The password should be at least 4 characters long");
+          else{
+            var res = await  attemptSignUp("ahmed10", "123456","ahmedd ","example@email.com","deazezae","male",["admin"]);
+
+            if(res == 201)
+              displayDialog(context, "Success", "The user was created. Log in now.");
+            else if(res == 400)
+              displayDialog(context, "That username is already registered", "Please try to sign up using another username or log in if you already have an account.");
+            else {
+              displayDialog(context, "Error", "An unknown error occurred.");
+            }
+          }
         },
         child: Container(
+
           width: MediaQuery.of(context).size.width / 2,
           height: 80,
           child: Center(

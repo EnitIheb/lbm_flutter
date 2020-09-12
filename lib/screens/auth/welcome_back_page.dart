@@ -1,24 +1,42 @@
 
 import 'package:ecommerce_int2/app_properties.dart';
+import 'package:ecommerce_int2/screens/product/product_page.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'register_page.dart';
+import '../notifications_page.dart';
 
-class                            WelcomeBackPage extends StatefulWidget {
+
+const SERVER_IP = 'http://192.168.1.4:8098';
+final storage = FlutterSecureStorage();
+
+Future<String> attemptLogIn(String username, String password) async {
+  var res = await http.post(
+      "$SERVER_IP/api/auth/signin",
+      body:json.encode( {
+        "username": username,
+        "password": password
+      }),  headers: {"Content-Type": "application/json"},
+  );
+  if(res.statusCode == 200) return res.body;
+  return null;
+}
+
+class WelcomeBackPage extends StatefulWidget {
   @override
   _WelcomeBackPageState createState() => _WelcomeBackPageState();
 }
 
 class _WelcomeBackPageState extends State<WelcomeBackPage> {
-  TextEditingController email =
-      TextEditingController(text: 'example@email.com');
 
+  TextEditingController username = TextEditingController(text: 'username');
   TextEditingController password = TextEditingController(text: '12345678');
-
   @override
   Widget build(BuildContext context) {
     Widget welcomeBack = Text(
-      'Welcome Back Roberto,',
+      'Welcome Back User,',
       style: TextStyle(
           color: Colors.white,
           fontSize: 34.0,
@@ -35,7 +53,7 @@ class _WelcomeBackPageState extends State<WelcomeBackPage> {
     Widget subTitle = Padding(
         padding: const EdgeInsets.only(right: 56.0),
         child: Text(
-          'Login to your account using\nMobile number',
+          'Login to your account ',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16.0,
@@ -46,9 +64,20 @@ class _WelcomeBackPageState extends State<WelcomeBackPage> {
       left: MediaQuery.of(context).size.width / 4,
       bottom: 40,
       child: InkWell(
-        onTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => RegisterPage()));
+        onTap: () async {
+          var username1= username.text;
+          var password1=password.text;
+          var jwt = await attemptLogIn(username1, password1);
+          if(jwt != null) {
+
+            storage.write(key: "jwt", value: jwt.toString());
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => NotificationsPage()
+                )
+            );
+          }
         },
         child: Container(
           width: MediaQuery.of(context).size.width / 2,
@@ -100,7 +129,7 @@ class _WelcomeBackPageState extends State<WelcomeBackPage> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: TextField(
-                    controller: email,
+                    controller: username,
                     style: TextStyle(fontSize: 16.0),
                   ),
                 ),

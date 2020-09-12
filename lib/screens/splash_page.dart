@@ -1,10 +1,19 @@
 import 'package:ecommerce_int2/app_properties.dart';
 import 'package:ecommerce_int2/screens/auth/welcome_back_page.dart';
+import 'package:ecommerce_int2/screens/product/product_page.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
+}
+final storage = FlutterSecureStorage();
+Future<String> get jwtOrEmpty async {
+  var jwt = await storage.read(key: "jwt");
+  if(jwt == null) return "";
+  return jwt;
 }
 
 class _SplashScreenState extends State<SplashScreen>
@@ -32,9 +41,27 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  Widget naviagte(){
+    if(jwtOrEmpty.toString() !="")
+    {
+      var jwt = jwtOrEmpty.toString().split(".");
+      if(jwt.length!=3)
+      {
+        return WelcomeBackPage();
+      }else{
+        var payload = json.decode(ascii.decode(base64.decode(base64.normalize(jwt[1]))));
+        if(DateTime.fromMillisecondsSinceEpoch(payload["exp"]*1000).isAfter(DateTime.now())) {
+          return ProductPage();
+        } else {
+          return WelcomeBackPage();
+        }
+
+      }
+  }}
+
   void navigationPage() {
     Navigator.of(context)
-        .pushReplacement(MaterialPageRoute(builder: (_) => WelcomeBackPage()));
+        .pushReplacement(MaterialPageRoute(builder: (_) => naviagte()));
   }
 
   Widget build(BuildContext context) {
